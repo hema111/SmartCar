@@ -1,0 +1,1784 @@
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU Smartcar 16
+**	文件名称：main.c
+**  文件描述：主函数  
+**
+**	当前版本：V1.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016 
+** 
+**	取代版本：V0.0
+**	作    者：吕传龙
+**	完成日期：02/07/2016                        
+**	
+**  修改说明：无
+**  历史信息：无 					 
+**-------------------------------------------------------
+/*********************************************************/
+/*---------------头文件引用-----------------------------*/
+#include "MyHeader.h"        // 头文件集
+/*----------------预处理块-----------------------*/
+/*---------------函数定义---------------------------*/
+
+/*****************  主函数  ***************************/
+ void main(void)    
+{   
+    INT8 str[10]; 
+
+    DisableInterrupts;      //关闭中断
+    speedSet = speedStart;  //设定速度为启动速度
+    InitSystem();           //系统各模块初始化
+
+    GetGyroMedian();      //取二百次平均值作为陀螺仪基准值
+    EnableInterrupts;       //开中断                                        
+    for(; ;)
+    {            
+      if(PORTB_PB4==1)      //直立或者运行模式选择
+      {
+         runType=1; 
+      } 
+        
+      if(showTimes==0) 
+      {
+        sprintf(str,"%.2f",angleKalmanOut);//显示实时角度
+        LCD_P6x8Str(6,0,str);                
+      }
+      
+      OutData[0] = dataTestUD;   //发送数据红
+      OutData[1] = dataTestLR;   //发送数据黄
+      OutData[2] = dataRec;      //发送数据蓝      
+      OutData[3] = dataRec+10;   //发送数据粉
+      OutPut_Data();      //虚拟示波器发送数据
+    }
+}
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU Smartcar 16
+**	文件名称：main.c
+**  文件描述：主函数  
+**
+**	当前版本：V1.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016 
+** 
+**	取代版本：V0.0
+**	作    者：吕传龙
+**	完成日期：02/07/2016                        
+**	
+**  修改说明：无
+**  历史信息：无 					 
+**-------------------------------------------------------
+/*********************************************************/
+
+#ifndef MY_HEADER_H
+#define MY_HEADER_H    //防止重复定义
+
+/*---------------预处理块-------------------------------*/
+#include "derivative.h"   // Derivative-specific definitions  
+#include <math.h>         // Math-functions definitions
+#include <stdio.h>        // System-functions definitions 
+#include <string.h>       // Libraries definitions
+#include "SystemInit.h"   // 初始化模块
+#include "TypeDefine.h"   // 类型定义模块
+#include "GeneralFun.h"       // 常用函数模块
+#include "Interrupts.h"       // 中断函数模块
+#include "MacroAndConst.h"    // 宏、常量模块
+#include "Collect.h"          // 数据收集模块
+#include "Control.h"          // 控制模块
+
+#include "LCD.h"             // 液晶屏模块
+/*---------------函数和类结构声明-----------------------*/
+
+#endif    // 结束定义，配合#ifndef使用
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU SmartCar 11
+**	文件名称Delay.h
+**  文件描述：延时函数头文件
+**
+**	当前版本：V1.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016 
+** 
+**	取代版本：V0.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016                        
+**	
+**  修改说明：无
+**  历史信息：无 					 
+**-------------------------------------------------------
+********************************************************/
+
+#ifndef DELAY_H   
+#define DELAY_H    // 防止重复定义
+
+/*---------------预处理块-------------------------------*/
+     
+/*---------------函数和类结构声明-----------------------*/
+/********************************************************
+函 数 名：     DelayUs                          
+入口参数：     延时时间t us               
+出口参数：     无
+函数功能：     延时函数                                                 
+备    注：         
+*********************************************************/   
+extern void DelayUs(UINT16 t);
+
+/********************************************************
+函 数 名：     Delay5us                          
+入口参数：     延时时间5*t us               
+出口参数：     无
+函数功能：     延时函数                                                 
+备    注：         
+*********************************************************/ 
+extern void Delay5us(UINT16 t);
+
+/********************************************************
+函 数 名：     DelayMs                          
+入口参数：     延时时间t Ms               
+出口参数：     无
+函数功能：     延时函数                                                 
+备    注：         
+*********************************************************/
+extern void DelayMs(UINT16 t);  
+
+/********************************************************
+函 数 名：     Dly_us                          
+入口参数：     延时时间1 us               
+出口参数：     无
+函数功能：     延时函数                                                 
+备    注：         
+*********************************************************/   
+extern void Dly_us(void);
+#endif    // 结束定义，配合#ifndef使用
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU Smartcar 16
+**	文件名称：Delay.c
+**  文件描述：延时函数定义文件
+**
+**	当前版本：V1.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016 
+** 
+**	取代版本：V0.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016                        
+**	
+**  修改说明：无
+**  历史信息：无 					 
+**-------------------------------------------------------
+********************************************************/
+/*---------------头文件引用-----------------------------*/
+#include "MyHeader.h"        // 头文件集
+/*---------------函数和类结构声明-----------------------*/
+void DelayUs(UINT16 t);
+void Delay5us(UINT16 t);
+void DelayMs(UINT16 t);
+void Dly_us(void);
+/*---------------函数和类定义---------------------------*/
+/********************************************************
+函 数 名：     DelayUs                          
+入口参数：     延时时间t us               
+出口参数：     无
+函数功能：     延时函数                                                 
+备    注：     64M下为1us    
+*********************************************************/  
+void DelayUs(UINT16 t) 
+{
+    UINT16 i;
+    while (t--)
+    {
+        for ( i = 0; i < 9; i++);
+    }   
+}
+
+/********************************************************
+函 数 名：     Delay5us                          
+入口参数：     延时时间5*t us               
+出口参数：     无
+函数功能：     延时函数                                                 
+备    注：     64M下为5us     
+*********************************************************/ 
+void Delay5us(UINT16 t) 
+{
+    UINT16 i;
+    while (t--) 
+    {
+       for (i = 0;i < 49;i++);      
+    }  
+}
+
+/********************************************************
+函 数 名：     DelayMs                          
+入口参数：     延时时间t Ms               
+出口参数：     无
+函数功能：     延时函数                                                 
+备    注：     64M下为1Ms    
+*********************************************************/
+void DelayMs(UINT16 t)
+{
+    UINT16 i;
+    while(t--)
+    {  
+        for (i=0;i <10680;i++);
+    }
+}
+
+/********************************************************
+函 数 名：     Dly_us                          
+入口参数：     无               
+出口参数：     无
+函数功能：     延时函数                                                 
+备    注：     64M下约为1us
+*********************************************************/                                                                                    
+void Dly_us(void)
+{                                                                                                      
+    INT16 ii;    
+   
+    for(ii = 0;ii < 100;ii++);      
+}
+
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU Smartcar 16
+**	文件名称：main.c
+**  文件描述：主函数  
+**
+**	当前版本：V1.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016 
+** 
+**	取代版本：V0.0
+**	作    者：吕传龙
+**	完成日期：02/07/2016                        
+**	
+**  修改说明：无
+**  历史信息：无 					 
+**-------------------------------------------------------
+/*********************************************************/
+
+#ifndef SYSTEM_INIT_H
+#define SYSTEM_INIT_H    //防止重复定义
+
+/*---------------预处理块-------------------------------*/ 
+   
+/*---------------函数和类结构声明-----------------------*/ 
+/********************************************************
+函 数 名：     SystemInit                          
+入口参数：     无               
+出口参数：     无
+函数功能：     系统初始化                                                 
+备    注：         
+*********************************************************/    
+extern void InitSystem(void);
+
+#endif    // 结束定义，配合#ifndef使用
+
+
+
+
+
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU Smartcar 16
+**	文件名称：SystemInit.c
+**  文件描述：系统初始化定义文件
+**
+**	当前版本：V4.0
+**	作    者：吕传龙
+**	完成日期：06/29/2016 
+** 
+**	取代版本：V3.0
+**	作    者：吕传龙
+**	完成日期：04/29/2016                        
+**	
+**  修改说明：无
+**  历史信息：无	
+**
+**-------------------------------------------------------
+********************************************************/
+/*---------------头文件引用-----------------------------*/
+#include "MyHeader.h"         // 头文件集
+/*---------------函数和类结构声明-----------------------*/
+extern void InitSystem(void); // 系统总初始化函数
+void InitPLL(void);           // 总线频率初始化函数   
+void InitPORT(void);          // 普通IO口初始化函数
+void InitPWM(void);           // PWM初始化函数
+void InitPIT(void);           // 定时中断初始化函数
+void InitSCI(void);           // 串口初始化函数
+void LCD_Init(void);          // 脉冲累加初始化函数 测速
+void InitATD(void);           // AD初始化函数
+
+
+/*---------------函数和类定义---------------------------*/  
+/********************************************************
+函 数 名：     InitPLL                          
+入口参数：     无               
+出口参数：     无
+函数功能：     总线频率初始化函数                                                
+备    注：     总线频率为64M    
+*********************************************************/ 
+void InitPLL(void) 
+{   
+    CLKSEL = 0X00;			        //disengage PLL to system
+    PLLCTL_PLLON = 1;		      	//turn on PLL
+    SYNR = 0xc0 | 0x07;                        
+    REFDV = 0x80 | 0x01; 
+    POSTDIV = 0x00;                 //pllclock=2*osc*(1+SYNR)/(1+REFDV)=128MHz;
+    _asm(nop);                      //BUS CLOCK=64M
+    _asm(nop);
+    while(!(CRGFLG_LOCK == 1));	    //when pll is steady ,then use it;
+    CLKSEL_PLLSEL = 1;		        //engage PLL to system; 
+}    
+ 
+/********************************************************
+函 数 名：    InitPORT                          
+入口参数：    无               
+出口参数：    无
+函数功能：    IO初始化函数                                                 
+备    注：    B口作为按键接口，A为外接计数器接口    
+*********************************************************/       
+void InitPORT(void)
+{
+    DDRB=0Xff;   
+    PORTB=0Xff;
+    DDRA=0Xff;   
+    PORTA=0Xff;
+    DDRS=0xff; 
+    DDRT|=0X07;     
+}
+
+/********************************************************
+函 数 名：     InitPWM                          
+入口参数：     无               
+出口参数：     无
+函数功能：     脉宽调制初始化函数                                                 
+备    注：     16KHZ频率     
+*********************************************************/ 
+void InitPWM(void)  
+{
+    PWMPOL = 0xaa;       //级联
+    PWMCLK = 0xaa; 
+    PWMPRCLK = 00010001; //2分频
+    PWMCAE = 0x00;       //左端对齐
+    PWMCTL = 0xf0;
+    PWMSCLA  = 1;
+    PWMSCLB  = 1;
+    PWMPER67 = 1000;
+    PWMPER45 = 1000;
+    PWMPER23 = 1000;
+    PWMPER01 = 1000;
+    
+    PWMDTY01=0;
+    PWMDTY23=0;
+    PWMDTY45=0;
+    PWMDTY67=0;
+    PWME=0xaa;
+}
+ 
+/********************************************************
+函 数 名：     InitPIT                          
+入口参数：     无               
+出口参数：     无
+函数功能：     定时中断初始化函数                                                 
+备    注：     每隔3ms触发一次中断     
+*********************************************************/                                                                                    
+void InitPIT(void)                  
+{ 
+    PITCFLMT_PITE = 0;          //disable PIT      
+    PITCE_PCE0 = 1;                        
+    PITMTLD0 = 199;                                             
+    PITLD0 = 949;               //16位定时
+    PITINTE_PINTE0 = 1;   
+    PITCFLMT_PITE = 1;          //enable PIT     
+}
+
+/********************************************************
+函 数 名：     InitSCI                          
+入口参数：     无               
+出口参数：     无
+函数功能：     串口初始化函数                                                 
+备    注：     波特率为9600    
+*********************************************************/ 
+void InitSCI(void) 
+{
+    SCI0CR1 = 0X00;  //正常8位模式，无奇偶校验
+    SCI0CR2 = 0x2C;  //发送接受中断使能
+    SCI0BD  = 416;    //波特率9600
+} 
+
+/********************************************************
+函 数 名：     InitATD                          
+入口参数：     无               
+出口参数：     无
+函数功能：     AD模块初始化函数                                                 
+备    注：     无    
+*********************************************************/                                                                                    
+void InitATD(void)   
+{ 
+    ATD0CTL1 = 0x40;   //7:1-外部触发,65:00-12位精度,4:放电,3210:ch
+    ATD0CTL2 = 0x40;   //禁止外部触发, 中断禁止 ,快速清除标志位   
+    ATD0CTL3 = 0xa0;   //右对齐无符号,每次转换4个序列, No FIFO, Freeze模式下继续转    
+    ATD0CTL4 = 0x03;   //765:采样时间为4个AD时钟周期,ATDClock=[BusClock*0.5]/[PRS+1]=8MHZ
+    ATD0CTL5 = 0x30;   //6:0特殊通道禁止,5:1连续转换 ,4:1多通道轮流采样，确定第一个输入通道AN0
+    ATD0DIEN = 0x00;   //禁止数字输入   
+}
+
+
+/*********************************************************************
+函数名:       InitSystem                          
+输入管脚:     无
+
+输出管脚:     无 
+函数功能:     包含所有系统初始化函数,完成初始化任务。                      
+备注:         无
+*********************************************************************/
+void InitSystem(void)
+{                    
+  
+    InitPLL();        // 总线时钟初始化64M
+    InitSCI();        // 串行通信初始化9600bps
+    InitPORT();       // GPIO初始化     
+    InitATD();        //AD初始化
+    LCD_Init();       //液晶初始化
+    
+    InitPWM();        //PWM初始化
+    InitPIT();       //定时中断初始化3ms
+}
+
+
+
+
+
+
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU Smartcar 16
+**	文件名称：TypeDefine.h
+**  文件描述：类型重定义头文件  
+**
+**	当前版本：V1.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016 
+** 
+**	取代版本：V0.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016                        
+**	
+**  修改说明：无
+**  历史信息：无 					 
+**-------------------------------------------------------
+********************************************************/
+
+#ifndef TYPE_DEFINE_H
+#define TYPE_DEFINE_H    //防止重复定义
+
+/*---------------预处理块-------------------------------*/       
+typedef signed char INT8;        //-128~127
+typedef signed int INT16;        //-32768~32767
+typedef signed long INT32;       //-2147 483 648~2147 483 647
+
+typedef signed char const CINT8;
+typedef signed int const CINT16;
+typedef signed long const CINT32;
+
+typedef unsigned char UINT8;      //0~255
+typedef unsigned short UINT16;    //0~65535
+typedef unsigned long UINT32;     //0~4294 967 295
+typedef unsigned char UCHAR;
+
+typedef unsigned char const CUINT8;
+typedef unsigned short const CUINT16;
+typedef unsigned long const CUINT32;
+
+typedef float REAL16;
+typedef double REAL32;
+
+
+/*---------------函数和类结构声明-----------------------*/
+
+#endif    // 结束定义，配合#ifndef使用      
+
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU Smartcar 16
+**	文件名称：GeneralFun.h
+**  文件描述：常用函数头文件
+**
+**	当前版本：V7.0
+**	作    者：吕传龙
+**	完成日期：08/02/2016 
+** 
+**	取代版本：V6.0
+**	作    者：吕传龙
+**	完成日期：06/10/2016                        
+**	
+**  修改说明：V1.0:去掉去掉不用的函数，改写有符号字节函数
+**  历史信息: 
+**				   
+**-------------------------------------------------------
+********************************************************/
+#ifndef GENERAL_FUN_H        
+#define GENERAL_FUN_H    //防止重复定义 
+
+/*---------------预处理块-------------------------------*/
+/*---------------变量声明-------------------------------*/
+/*---------------函数和类结构声明-----------------------*/   
+UINT8 SCI_READ(void);
+void SendByte(UINT8 send);   // 串口0无符号单字节发送函数
+void SendWord(UINT16 send);  // 串口0无符号双字节发送函数
+void SendSByte(INT8 send);   // 串口0有符号单字节发送函数
+void SendSWord(INT16 send);  // 串口0有符号双字节发送函数
+
+extern UINT8 GetSCIByte(void);  //串口0无符号单字节接收函数
+extern void SendSCIByte(UINT8 Send);  //串口0无符号单字节发送函数
+extern UINT16 CRC_CHECK(UINT8 *Buf, UINT8 CRC_CNT);  //数据冗余校验函数
+extern void OutPut_Data(void);  //虚拟示波器四端口发送函数
+
+extern UINT8 dataTestUD;
+extern UINT8 dataTestLR;
+extern UINT8 dataRec;
+extern float OutData[4];
+
+
+float MyFabs(float x);      // 浮点型求绝对值函数
+float MyPowf(float x,INT16 y); // 浮点型幂函数
+float MySinFast(float theta);  // 快速正弦函数
+float MyCosFast(float theta);  // 快速余弦函数
+float MySinSlow(float theta);  // 慢速正弦函数
+float MyCosSlow(float theta);  // 慢速余弦函数 
+
+INT32 IntSinFast(INT32 theta);  // 整型快速正弦函数
+INT32 IntCosFast(INT32 theta);  // 整型快速余弦函数
+INT32 IntSinSlow(INT32 theta);  // 整型慢速正弦函数
+INT32 IntCosSlow(INT32 theta);  // 整型慢速余弦函数
+
+INT32 IntAbs(INT32 value);        // 整型取整函数
+extern void GetGyroMedian(void);// 获取加速度计和陀螺仪的中值
+
+#endif   // 结束定义，配合#ifndef使用
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU Smartcar 16
+**	文件名称：GeneralFun.c
+**  文件描述：常用函数定义文件
+**
+**	当前版本：V7.0
+**	作    者：吕传龙
+**	完成日期：08/02/2016 
+** 
+**	取代版本：V6.0
+**	作    者：吕传龙
+**	完成日期：06/10/2016                        
+**	
+**  修改说明：无
+**  历史信息: 无 
+**				   
+**-------------------------------------------------------
+********************************************************/
+
+/*---------------头文件引用-----------------------------*/
+#include "MyHeader.h"     // 头文件集
+
+/*---------------预处理块-------------------------------*/                 
+/*---------------变量定义及初始化-----------------------*/  
+/*---------------函数和类结构声明-----------------------*/
+UINT8 SCI_READ(void);        // 串口0读取函数
+void SendByte(UINT8 send);   // 串口0无符号单字节发送函数
+void SendWord(UINT16 send);  // 串口0无符号双字节发送函数
+void SendSByte(INT8 send);   // 串口0有符号单字节发送函数
+void SendSWord(INT16 send);  // 串口0有符号双字节发送函数
+
+UINT8 GetSCIByte(void);  //串口0无符号单字节接收函数
+void SendSCIByte(UINT8 Send);  //串口0无符号单字节发送函数
+UINT16 CRC_CHECK(UINT8 *Buf, UINT8 CRC_CNT);  //数据冗余校验函数
+void OutPut_Data(void);  //虚拟示波器四端口发送函数
+
+UINT8 dataTestUD = 50;  //前后测试数据
+UINT8 dataTestLR = 70;  //左右测试数据
+UINT8 dataRec = 0;  //接收数据
+float OutData[4] = {0,0,0,0};  //虚拟示波器变量
+
+float MyFabs(float x);      // 浮点型求绝对值函数
+float MyPowf(float x,INT16 y); // 浮点型幂函数
+float MySinFast(float theta);  // 快速正弦函数
+float MyCosFast(float theta);  // 快速余弦函数
+float MySinSlow(float theta);  // 慢速正弦函数
+float MyCosSlow(float theta);  // 慢速余弦函数
+
+INT32 IntSinFast(INT32 theta);  // 整型快速正弦函数
+INT32 IntCosFast(INT32 theta);  // 整型快速余弦函数
+INT32 IntSinSlow(INT32 theta);  // 整型慢速正弦函数
+INT32 IntCosSlow(INT32 theta);  // 整型慢速余弦函数
+
+INT32 IntAbs(INT32 value);        // 整型取整函数
+
+void GetMedian(void);             // 陀螺仪中值获取
+/*---------------函数和类定义---------------------------*/
+/********************************************************
+函 数 名：     SCI_READ                          
+入口参数：     无
+出口参数：     串口0读取的单字节数据
+函数功能：     读取通过串口接收到的单字节数据                                     
+备    注：     仅限于接收单字节数据；如超过长度则接收低字节    
+*********************************************************/
+byte SCI_READ(void)
+{
+    if(SCI0SR1_RDRF == 1)
+    {
+  //      SCI0SR1_RDRF=1;
+        SCI0DRH = 0;
+        return SCI0DRL;
+    }
+}  
+/********************************************************
+函 数 名：     SendByte                          
+入口参数：     串口发送的字节数据
+出口参数：     无
+函数功能：     通过串口发送一个字节的数据                                     
+备    注：     仅限于发送单字节数据；如超过长度则发送低字节    
+*********************************************************/
+void SendByte(UINT8 send)
+{
+    while(SCI0SR1_TDRE==0);
+    SCI0DRH=0;
+    SCI0DRL=send;
+    Delay5us(2);
+}
+/********************************************************
+函 数 名：     SendWord                          
+入口参数：     串口发送的双字节数据
+出口参数：     无
+函数功能：     通过串口发送俩个字节的数据                                     
+备    注：     仅限于发送俩字节数据；如超过长度则发送低俩字节    
+*********************************************************/
+void SendWord(UINT16 send)
+{
+    SendByte((UINT8)(send>>8));
+    SendByte((UINT8)send);
+}
+/********************************************************
+函 数 名：     GetSCIByte                          
+入口参数：     无               
+出口参数：     无
+函数功能：     串口接收函数                                                 
+备    注：     波特率为9600    
+*********************************************************/                
+UINT8 GetSCIByte(void)
+{
+    UINT8 sendByte;
+     
+    while (!(SCI0SR1 & 0x20));    //等待接收数据完毕    
+    SCI0SR1_RDRF = 1;    
+    sendByte = SCI0DRL;
+    
+    return sendByte;
+}
+
+/********************************************************
+函 数 名：     SendSCIByte                          
+入口参数：     ch               
+出口参数：     无
+函数功能：     串口发送函数                                                 
+备    注：     波特率为9600    
+*********************************************************/                
+void SendSCIByte(UINT8 Send) 
+{
+    byte tmp;
+    
+    while (!(SCI0SR1 & 0x80));     //等待清空缓冲区
+    SCI0DRH = 0x00;                //发送一个字节，高位置零
+    SCI0DRL = Send;                  //发送数据
+    
+    tmp = SCI0SR1; 
+}
+
+/********************************************************
+函 数 名：     CRC_CHECK                          
+入口参数：     *Buf , CRC_CNT               
+出口参数：     CRC_Temp
+函数功能：     循环冗余校验函数                                                 
+备    注：     检验数据完整性    
+*********************************************************/ 
+UINT16 CRC_CHECK(UINT8 *Buf, UINT8 CRC_CNT)
+{
+    UINT16 CRC_Temp;
+    UINT8 i,j;
+    CRC_Temp = 0xffff;
+    for (i=0;i<CRC_CNT; i++)
+    {      
+        CRC_Temp ^= Buf[i];
+        for (j=0;j<8;j++) 
+        {
+            if (CRC_Temp & 0x01)
+                CRC_Temp = (CRC_Temp >>1 ) ^ 0xa001;
+            else
+                CRC_Temp = CRC_Temp >> 1;
+        }
+    }
+    return(CRC_Temp);
+}
+
+/********************************************************
+函 数 名：     OutPut_Data                          
+入口参数：     无               
+出口参数：     无
+函数功能：     数据发送函数                                                 
+备    注：     发送四位数据    
+*********************************************************/ 
+void OutPut_Data(void)
+{
+    INT16 temp[4] = {0};       
+    UINT16 temp1[4] = {0};          
+    UINT8 databuf[10] = {0};
+    UINT8 i;
+    UINT16 CRC16 = 0;
+          
+    for(i=0;i<4;i++)
+    {       
+        temp[i]  = (INT16)OutData[i];
+        temp1[i] = (UINT16)temp[i];
+    }        
+    for(i=0;i<4;i++) 
+    {
+        databuf[i*2]   = (UINT8)(temp1[i]%256);
+        databuf[i*2+1] = (UINT8)(temp1[i]/256);
+    }
+    CRC16 = CRC_CHECK(databuf,8);
+    databuf[8] = CRC16%256;
+    databuf[9] = CRC16/256;
+  
+    for(i=0;i<10;i++)
+    {
+        SendSCIByte(databuf[i]);
+    }
+      
+}
+
+/********************************************************
+函 数 名：     MyFabs                          
+入口参数：     欲求绝对值的浮点型数据
+出口参数：     浮点型数据的绝对值
+函数功能：     求浮点型数据的绝对值                                     
+备    注：     无   
+*********************************************************/
+float MyFabs(float x)  
+{
+    if (x>0)
+        return x;
+    else
+        return (-x);
+}
+/********************************************************
+函 数 名：     MyPowf                          
+入口参数：     x:浮点型数据  y:数据的幂
+出口参数：     浮点型数据的幂
+函数功能：     求浮点型数据的幂                                     
+备    注：     无   
+*********************************************************/
+float MyPowf(float x,INT16 y)
+{
+    float xx = 1.0;
+    INT16 i;
+    for(i=0;i<y;i++)
+        xx*=x;
+    return xx;        
+}
+/********************************************************
+函 数 名：     MySinFast                          
+入口参数：     theat:弧度
+出口参数：     弧度的正弦值 
+函数功能：     求弧度的正弦值                                     
+备    注：     速度快 精度低 适用于运算次数多 弧度小的地方 泰勒级数展开
+*********************************************************/
+float MySinFast(float theta)
+{
+    float sinTheta;
+    sinTheta = theta-theta*theta*theta/6;
+    return sinTheta; 
+}
+/********************************************************
+函 数 名：     MyCosFast                          
+入口参数：     theat:弧度
+出口参数：     弧度的余弦值 
+函数功能：     求弧度的余弦值                                     
+备    注：     速度快 精度低 适用于运算次数多 弧度小的地方 泰勒级数展开
+*********************************************************/
+float MyCosFast(float theta)
+{
+    float cosTheta;
+    cosTheta = 1-theta*theta/2;
+    return cosTheta; 
+}
+/********************************************************
+函 数 名：     MySinSlow                          
+入口参数：     theat:弧度
+出口参数：     弧度的正弦值 
+函数功能：     求弧度的正弦值                                     
+备    注：     速度慢 精度高 适用于运算次数少的地方 泰勒级数展开
+*********************************************************/
+float MySinSlow(float theta)
+{
+    float sinTheta;
+    sinTheta = theta-theta*theta*theta/6+theta*theta*theta*theta*theta/120;//-theta*theta*theta*theta*theta*theta*theta/5040;
+    return sinTheta; 
+}
+/********************************************************
+函 数 名：     MyCosSlow                          
+入口参数：     theat:弧度
+出口参数：     弧度的余弦值 
+函数功能：     求弧度的余弦值                                     
+备    注：     速度慢 精度高 适用于运算次数少的地方 泰勒级数展开
+*********************************************************/
+float MyCosSlow(float theta)
+{
+    float cosTheta;
+    cosTheta = 1-theta*theta/2+theta*theta*theta*theta/24;//-theta*theta*theta*theta*theta*theta/720;
+    return cosTheta; 
+}
+/********************************************************
+函 数 名：     IntSinFast                          
+入口参数：     theat:弧度
+出口参数：     弧度的正弦值 
+函数功能：     求整型弧度的正弦值                                     
+备    注：     速度快 精度低 适用于运算次数多 弧度小的地方 泰勒级数展开
+*********************************************************/
+INT32 IntSinFast(INT32 theta)
+{
+    INT32 sinTheta100000;
+    sinTheta100000 = theta-theta*theta/1000*theta/6/10000000;
+    return sinTheta100000; 
+}
+/********************************************************
+函 数 名：     IntCosFast                          
+入口参数：     theat:弧度
+出口参数：     弧度的余弦值 
+函数功能：     求整型弧度的余弦值                                     
+备    注：     速度快 精度低 适用于运算次数多 弧度小的地方 泰勒级数展开
+*********************************************************/
+INT32 IntCosFast(INT32 theta)
+{
+    INT32 cosTheta100000;
+    cosTheta100000 = 100000-theta*theta/2/100000;
+    return cosTheta100000; 
+}
+/********************************************************
+函 数 名：     IntSinSlow                          
+入口参数：     theat:弧度
+出口参数：     弧度的正弦值 
+函数功能：     求整型弧度的正弦值                                     
+备    注：     速度慢 精度高 适用于运算次数少的地方 泰勒级数展开
+*********************************************************/
+INT32 IntSinSlow(INT32 theta)
+{
+    INT32 sinTheta10000;
+    sinTheta10000 = theta-theta*theta/10000*theta/6/10000+theta*theta/10000*theta/10000*theta/10000*theta/120/10000;//-theta*theta*theta*theta*theta*theta*theta/5040;
+    return sinTheta10000; 
+}
+/********************************************************
+函 数 名：     IntCosSlow                          
+入口参数：     theat:弧度
+出口参数：     弧度的余弦值 
+函数功能：     求整型弧度的余弦值                                     
+备    注：     速度慢 精度高 适用于运算次数少的地方 泰勒级数展开
+*********************************************************/
+INT32 IntCosSlow(INT32 theta)
+{
+    INT32 cosTheta10000;
+    cosTheta10000 = 10000-theta*theta/2/10000+theta*theta/10000*theta/10000*theta/24/10000;//-theta*theta*theta*theta*theta*theta/720;
+    return cosTheta10000; 
+}
+
+/********************************************************
+函 数 名：     IntCosSlow                          
+入口参数：     theat:弧度
+出口参数：     弧度的余弦值 
+函数功能：     求整型弧度的余弦值                                     
+备    注：     速度慢 精度高 适用于运算次数少的地方 泰勒级数展开
+*********************************************************/
+INT32 IntAbs(INT32 value)
+{
+    return (value>=0?value:(-value)); 
+}
+
+/********************************************************
+函 数 名：     GetGyroMedian                          
+入口参数：     无
+出口参数：     无                   
+函数功能：     获取陀螺仪的中值                                            
+备    注：     无  
+********************************************************/
+void GetGyroMedian(void)
+{
+    UINT32 tempValue = 0;
+    UINT32 aveValue = 0;
+
+    INT16 i = 0;
+
+    for (i=0;i<200;i++)
+    {
+        while(ATD0STAT2_CCF0!=1);
+            tempValue = ATD0DR0;
+        aveValue += tempValue;        
+        
+        LCD_DLY_ms(2);
+    }
+    aveValue/=200;  
+
+    encSta = aveValue;
+}
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU Smartcar 16
+**	文件名称：MacroAndConst.h
+**  文件描述：宏和常量头文件  
+**
+**	当前版本：V2.0
+**	作    者：吕传龙
+**	完成日期：08/02/2016 
+** 
+**	取代版本：V1.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016                        
+**	
+**  修改说明：去掉调试的几个开关的宏定义
+**  历史信息：无 					 
+**-------------------------------------------------------
+********************************************************/
+
+#ifndef MACRO_AND_CONST_H
+#define MACRO_AND_CONST_H    //防止重复定义
+
+/*---------------头文件引用-----------------------------*/
+#include <hidef.h>       // common defines and macros
+#include "derivative.h"  // derivative-specific definitions  
+/*---------------预处理块-------------------------------*/
+/*---------------常用常量-------------------------------*/
+
+#define PI 3.14159265358979323846
+/*---------------常用常量-------------------------------*/
+#define MAX(a,b)   (((a)>(b))?(a):(b))    //求大者 
+#define MIN(a,b)   (((a)<(b))?(a):(b))    //求小者 
+#define ABS(x)     (((x)>=0)?(x):(-(x)))  //求绝对值
+#define MED(a,b,c) (((a)>(b)?(a):(b))>(c)?(((a)<(b)?(a):(b))>(c)?((a)<(b)?(a):(b)):(c)):((a)>(b)?(a):(b)))//求中位数
+
+
+/*---------------卡尔曼参数---------------------*/
+#define dt            0.00059  // 积分时间
+#define R_angle       0.2      // 测量误差协方差
+#define Q_angle       0.01     // 加速度计协方差
+#define Q_gyro        0.005    // 陀螺仪协方差
+
+/*---------------速度控制参数---------------------*/
+                          
+#define PWMDEATH  0              // 电机死区参数 
+
+/*---------------变量定义及初始化-----------------------*/
+#define TSL_SI  PORTA_PA1      //定义线性传感器的端口 SI
+#define TSL_CLK PORTA_PA3      //定义线性传感器的端口 CLK
+#define led2    PORTA_PA0      //左侧的灯
+#define led1    PORTA_PA2      //右侧的灯
+/*---------------速度部分--------------------------------*/
+
+
+/*---------------函数和类结构声明-----------------------*/
+
+#endif    // 结束定义，配合#ifndef使用   
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU SmartCar 11
+**	文件名称：Collect.h
+**  文件描述：信号收集头文件  
+**
+**	当前版本：V1.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016 
+** 
+**	取代版本：V0.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016                        
+**	
+**  修改说明：无
+**  历史信息：无 					 
+**-------------------------------------------------------
+********************************************************/
+
+#ifndef COLLECT_H
+#define COLLECT_H    //防止重复定义
+
+/*---------------预处理块-------------------------------*/
+
+#define BLACK 1     //黑线状态
+#define WHITE 0     //白线状态
+/*---------------变量声明-------------------------------*/
+extern float enc;  //当前陀螺仪值
+extern float mma;  //当前陀螺仪值
+extern float encTemp;  //陀螺仪中间变量
+extern float mmaTemp;  //加速度计中间变量
+extern float encCalculate;  //计算陀螺仪模拟量
+extern float mmaCalculate;  //计算加速度计模拟量
+extern float encConsequence;  //陀螺仪物理量
+extern float mmaConsequence;  //加速度计物理量
+extern float angleDerror;  //滤波角度误差微分量
+extern float angleKalmanOut;  //滤波角度
+extern float preAngle;  //前一时刻角度值
+extern INT16 mmaSta ;   //加速度计零偏值
+extern INT16 encSta;   //陀螺仪零偏值
+
+extern float angleSta; //角度零偏值
+
+extern INT16 speedStart;  //启动初速度
+extern INT16 speedFinal;  //启动终速度
+extern INT16 speedSet;  //速度设定值
+extern INT16 preCD45;   //外部计数器前一时刻值
+extern INT16 aftCD45;   //外部计数器后一时刻值
+extern INT32 prePACNT;  //内部计数器前一时刻值
+extern INT32 aftPACNT;  //内部计数器前一时刻值
+extern INT32 speedPulseA[10];  //左轮速度脉冲
+extern INT16 speedPulseB[10];  //右轮速度脉冲
+extern float lSpeedNow;  //左轮速度
+extern float rSpeedNow;  //右轮速度
+extern float speedIntegra;  //速度偏差量积分
+extern float averageSpeed;  //左右轮平均速度
+extern INT16 overflowFlag;  //内部计数器溢出标志位
+extern UINT8 activateTimes;  //电机减压启动次数
+extern UINT8 startToEnd;  //减压启动标志位
+extern UINT8 SpeedNumbers;  //计数次数
+extern UINT8 SpeedTimes;    //速度计数中断次数
+
+extern INT16  Pixel[128];  //CCD128位像素值
+extern INT16 thresholdPixel;  //CCD软件二值化阈值
+
+extern INT16 lLaserFlag;  //图像左侧丢线标志位
+extern INT16 rLaserFlag;  //图像右侧丢线标志位
+extern INT16 laserDeviation;  //图像偏差量
+/*---------------函数和类结构声明-----------------------*/
+/********************************************************
+函 数 名：     KalmanFilter                          
+入口参数：     陀螺仪角速度，加速度计角度               
+出口参数：     无滤波角度
+函数功能：     卡尔曼滤波函数                                                 
+备    注：     计算最优估计角度     
+*********************************************************/ 
+extern float KalmanFilter(const float gyro_m,const float incAngle);
+
+/********************************************************
+函 数 名：     RD_TSL                          
+入口参数：     无               
+出口参数：     无
+函数功能：     CCD采集图像函数                                                 
+备    注：     无    
+*********************************************************/    
+extern void RD_TSL(void);
+
+/********************************************************
+函 数 名：     ConvertAngel                          
+入口参数：     无               
+出口参数：     无
+函数功能：     角度转换函数                                                 
+备    注：     计算出实际倾角     
+*********************************************************/ 
+extern void ConvertAngel(void);
+
+/********************************************************
+函 数 名：     ConvertSpeed                          
+入口参数：     无               
+出口参数：     无
+函数功能：     速度转换函数 120ms毫秒为周期                                               
+备    注：     计算出实际速度     
+*********************************************************/  
+extern void ConvertSpeed(void);
+
+/********************************************************
+函 数 名：     ConvertDeviation                          
+入口参数：     无               
+出口参数：     无
+函数功能：     偏差转换函数                                                 
+备    注：     从图像信息中得到实际偏差     
+*********************************************************/  
+extern void ConvertDeviation(void); 
+
+#endif    // 结束定义，配合#ifndef使用  
+
+/********************************************************
+**  Copyright (c)   SWJTU SmartCar 11, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU SmartCar 11
+**	文件名称：Collect.c
+**  文件描述：信号收集定义文件
+**
+**	当前版本：V5.0
+**	作    者：吕传龙
+**	完成日期：06/27/2016 
+** 
+**	取代版本：V4.0
+**	作    者：吕传龙
+**	完成日期：03/23/2016                        
+**	
+**  修改说明：无
+**  历史信息：无
+**             					 
+**-------------------------------------------------------
+********************************************************/
+
+/*---------------头文件引用-----------------------------*/
+#include "MyHeader.h"        // 头文件集
+/*---------------预处理块-------------------------------*/
+#define BLACK 1     //黑线状态
+#define WHITE 0     //白线状态
+/*---------------变量定义及初始化-----------------------*/
+float enc;  //当前陀螺仪值
+float mma;  //当前陀螺仪值
+float encTemp;  //陀螺仪中间变量
+float mmaTemp;  //加速度计中间变量
+float encCalculate;  //计算陀螺仪模拟量
+float mmaCalculate;  //计算加速度计模拟量
+float encConsequence;  //陀螺仪物理量
+float mmaConsequence;  //加速度计物理量
+float angleDerror;  //滤波角度误差微分量
+float angleKalmanOut;  //滤波角度
+float preAngle;  //前一时刻角度值
+
+INT16 mmaSta = 1150;   //加速度计零偏值
+INT16 encSta = 1200;   //陀螺仪零偏值
+float angleSta = -16.7; //角度零偏值
+
+INT16 speedStart = 30;  //启动初速度，两者之差为30
+INT16 speedFinal = 60;  //启动终速度
+INT16 speedSet;  //速度设定值
+INT16 preCD45;   //外部计数器前一时刻值
+INT16 aftCD45;   //外部计数器后一时刻值
+INT32 prePACNT;  //内部计数器前一时刻值
+INT32 aftPACNT;  //内部计数器前一时刻值
+INT32 speedPulseA[10];  //左轮速度脉冲
+INT16 speedPulseB[10];  //右轮速度脉冲
+float lSpeedNow;  //左轮速度
+float rSpeedNow;  //右轮速度
+float speedIntegra;  //速度偏差量积分
+float averageSpeed;  //左右轮平均速度
+INT16 overflowFlag;  //内部计数器溢出标志位
+UINT8 activateTimes;  //电机减压启动次数
+UINT8 startToEnd;  //减压启动标志位
+UINT8 SpeedNumbers;  //计数次数
+UINT8 SpeedTimes;    //速度计数中断次数
+
+INT16  Pixel[128] = {0, 0};  //CCD128位像素值
+INT16 thresholdPixel = 1200;  //CCD软件二值化阈值
+
+INT16 lLaserFlag;  //图像左侧丢线标志位
+INT16 rLaserFlag;  //图像右侧丢线标志位
+INT16 laserDeviation;  //图像偏差量
+
+/*------------------加速度计陀螺仪部分-------------------*/
+
+
+/*---------------函数和类结构声明-----------------------*/
+float KalmanFilter(const float gyro_m,const float incAngle);
+void RD_TSL(void);
+void ConvertAngel(void);
+void ConvertSpeed(void);
+void ConvertDeviation(void);
+/*---------------函数和类定义---------------------------*/
+/********************************************************
+函 数 名：     KalmanFilter                          
+入口参数：     陀螺仪角速度，加速度计角度               
+出口参数：     无滤波角度
+函数功能：     卡尔曼滤波函数                                                 
+备    注：     计算最优估计角度     
+*********************************************************/ 
+float KalmanFilter(const float gyro_m,const float incAngle) 
+{                     
+    float K_0;//含有卡尔曼增益的另外一个函数，用于计算最优估计值
+    float K_1;//含有卡尔曼增益的函数，用于计算最优估计值的偏差
+    float Y_0;
+    float Y_1;
+        
+    float Rate;
+    float Pdot[4];
+    float angle_err;                       //角度偏量
+    float E;
+                
+    static float angle = 0;                //下时刻最优估计值角度
+    static float q_bias = 0;               //最优估计值的偏差                 
+    static float P[2][2] = {{ 1, 0 }, { 0, 1 }};
+                  
+    Rate = gyro_m - q_bias;
+         
+    Pdot[0] = Q_angle - P[0][1] - P[1][0]; //卡尔曼增益矩阵        
+    Pdot[1] = - P[1][1];                         
+    Pdot[2] = - P[1][1];                                  
+    Pdot[3] = Q_gyro;                         
+    angle += Rate * dt; 
+    P[0][0] += Pdot[0] * dt;               //计算协方差矩阵
+    P[0][1] += Pdot[1] * dt; 
+    P[1][0] += Pdot[2] * dt; 
+    P[1][1] += Pdot[3] * dt; 
+  
+    angle_err = incAngle - angle; 
+    E = R_angle + P[0][0];
+    K_0 = P[0][0] / E; 
+    K_1 = P[1][0] / E; 
+    Y_0 = P[0][0];   
+    Y_1 = P[0][1]; 
+  
+    P[0][0] -= K_0 * Y_0;                 //跟新协方差矩阵
+    P[0][1] -= K_0 * Y_1; 
+    P[1][0] -= K_1 * Y_0; 
+    P[1][1] -= K_1 * Y_1; 
+    angle += K_0 * angle_err;             //给出最优估计值
+    q_bias += K_1 * angle_err;            //跟新最优估计值偏差 
+         
+    return angle; 
+}
+
+/********************************************************
+函 数 名：     RD_TSL                          
+入口参数：     无               
+出口参数：     无
+函数功能：     CCD采集图像函数                                                 
+备    注：     无    
+*********************************************************/                                                                                    
+void RD_TSL(void) 
+{
+    INT16 i = 0 ;
+    TSL_CLK = 1;//起始电平高 
+    TSL_SI = 0; //起始电平低
+    Dly_us(); //合理的延时
+      
+    TSL_SI = 1; //上升沿
+    TSL_CLK = 0;//下降沿
+    Dly_us(); //合理延时
+      
+    TSL_CLK = 1;//上升沿
+    TSL_SI = 0; //下降沿
+    Dly_us(); //合理延时      
+    for(i = 0;i < 128;i++)
+    { 
+        TSL_CLK = 0;//下降沿                                                 
+        Dly_us(); //合理延时
+        while(!(ATD0STAT2_CCF2));
+        Pixel[i] = ATD0DR2;                                                        
+        TSL_CLK = 1;//上升沿 
+        Dly_us(); //合理延时    
+    }  
+}
+
+/********************************************************
+函 数 名：     ConvertAngel                          
+入口参数：     无               
+出口参数：     无
+函数功能：     角度转换函数                                                 
+备    注：     计算出实际倾角     
+*********************************************************/  
+void ConvertAngel(void) 
+{        
+    while(!(ATD0STAT2_CCF0)); //等待采集结束
+    enc = ATD0DR0;              //陀螺仪AD0值
+    while(!(ATD0STAT2_CCF1)); //等待采集结束
+    mma = ATD0DR1;              //加速度计AD1值
+
+    encTemp = encSta - enc;    //陀螺仪变化值
+    mmaTemp = mmaSta - mma;    //加速度计实际值
+                    
+    encCalculate = encTemp *5/4.096/0.67; //陀螺仪角速度
+    mmaCalculate = mmaTemp *5/4.096/800;  //加速度计重力分量
+          
+    if(mmaCalculate>1)         mmaCalculate = 1;
+    else if(mmaCalculate<-1)   mmaCalculate = -1;                       
+         
+    mmaConsequence = 180/3.1416*asinf(mmaCalculate); //加速度计角度
+    encConsequence = encCalculate;                   //陀螺仪角速度
+          
+    angleKalmanOut = KalmanFilter(encConsequence,mmaConsequence); //最佳估计角度
+          
+    angleDerror = (angleKalmanOut-preAngle)/0.006;                 //车体角速度
+
+    preAngle = angleKalmanOut;  
+                  
+}
+
+/********************************************************
+函 数 名：     ConvertSpeed                          
+入口参数：     无               
+出口参数：     无
+函数功能：     速度转换函数 120ms毫秒为周期                                               
+备    注：     计算出实际速度     
+*********************************************************/  
+void ConvertSpeed(void) 
+{
+    INT16 i;
+     
+    speedPulseB[SpeedTimes] = aftCD45 - preCD45;//前后两次之差即使时间段内的脉冲数即速度
+    speedPulseA[SpeedTimes] = overflowFlag * 65536 + aftPACNT - prePACNT; //48ms脉冲数 
+    
+    if(speedPulseB[SpeedTimes]<0)  
+    {           
+      speedPulseB[SpeedTimes] = speedPulseB[SpeedTimes] + 256;//补偿溢出误差
+    }
+    
+    SpeedTimes++;               //累计脉冲数
+    if(SpeedTimes==5)           //脉冲数取平均作为平均速度
+    {
+      SpeedTimes = 0;
+      lSpeedNow = 0;
+      rSpeedNow = 0;
+      for(i=0; i<5; i++) 
+      {
+        lSpeedNow += speedPulseA[i]; 
+        rSpeedNow += speedPulseB[i]; 
+      }
+    
+      lSpeedNow/=5;
+      rSpeedNow/=5;
+      averageSpeed = (lSpeedNow + rSpeedNow)/2;   //左右两轮均速为车身速度
+    
+      speedIntegra += speedSet - averageSpeed;    //速度偏差积分
+    }
+    
+    if(speedIntegra>300)    //积分上限限幅
+    {
+      speedIntegra = 300;    
+      
+    }      
+    else if(speedIntegra<-300)  //积分下限限幅
+    {
+      speedIntegra = -300;
+    
+    }
+    
+    if(overflowFlag==1)  //捕获寄存器溢出中断时加一  
+    {        
+      overflowFlag = 0;;
+    }
+    
+}
+
+/********************************************************
+函 数 名：     ConvertDeviation                          
+入口参数：     无               
+出口参数：     无
+函数功能：     偏差转换函数                                                 
+备    注：     从图像信息中得到实际偏差     
+*********************************************************/  
+void ConvertDeviation(void)   
+{   
+    INT16 i = 0;        //计数变量  
+    INT16 lLaserState;  //左侧黑线位置
+    INT16 rLaserState;  //右侧黑线位置
+                      
+    for(i=64; i>1; i-- ) //从中间向左侧寻找黑线
+    {
+      if(Pixel[i]<thresholdPixel && Pixel[i-1]<thresholdPixel) //连续两个黑点为黑线
+      {
+        lLaserState = 64-i;
+        lLaserFlag = 1;
+        break;
+      } 
+      else 
+      {
+        lLaserFlag = 0;       
+      }
+    }
+    
+    for(i=64; i<126; i++) //从中间向右侧寻找黑线
+    {
+      if(Pixel[i]<thresholdPixel && Pixel[i+1]<thresholdPixel) //连续两个黑点为黑线
+      {        
+        rLaserState = i-64;
+        rLaserFlag = 1;
+        break;
+      }
+      else 
+      {
+        rLaserFlag = 0;       
+      }
+    }
+    
+    if(lLaserFlag==BLACK && rLaserFlag==BLACK)    //同时采到两条线
+    {
+      laserDeviation = rLaserState - lLaserState;                                             
+    } 
+    else if(lLaserFlag==WHITE && rLaserFlag==WHITE) //两侧均为白线
+    {
+      laserDeviation = 0;
+    }
+    else if(lLaserFlag==BLACK && rLaserFlag==WHITE) //左侧黑线右侧白线
+    {
+      rLaserState = 64;
+      laserDeviation = rLaserState - lLaserState;                                                                                                                                                 
+    }                                                              
+    else if(lLaserFlag==WHITE && rLaserFlag==BLACK) //左侧白线右侧黑线
+    {
+      lLaserState = 64;
+      laserDeviation = rLaserState - lLaserState;                                                                            
+    }            
+}
+
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU Smartcar 16
+**	文件名称：Control.h
+**  文件描述小车控制头文件
+**
+**	当前版本：V1.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016 
+** 
+**	取代版本：V0.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016                        
+**	
+**  修改说明：无                 
+**  历史信息：无 					 
+**-------------------------------------------------------
+********************************************************/
+#ifndef CONTROL_H        
+#define CONTROL_H    // 防止重复定义 
+
+/*---------------预处理块-------------------------------*/
+#define STAND 0     //直立状态
+#define RUN   1     //运行状态
+/*---------------变量声明-------------------------------*/
+extern INT16 ST_KP;  //直立比例参数
+extern INT16 ST_KD;  //直立微分参数
+extern INT16 SP_KP;    // 速度比例参数
+extern INT16 SP_KI;    // 速度积分参数 
+extern INT16 DR_KP;   //方向比例参数
+extern INT16 DR_KD;    //方向微分参数
+
+extern float directionError;  //方向误差
+extern float directionDerror; //方向误差微分
+extern float predirectionError;  //方向误差保存值
+
+extern INT16 runType;  //运行状态
+
+extern INT16 PWMLeft;  //左轮PWM值
+extern INT16 PWMRight;   //右轮PWM值
+extern INT16 mainPWMDty; //直立与速度PWM值      
+
+/*---------------函数和类结构声明-----------------------*/ 
+/********************************************************
+函 数 名：     SetPWMDTY                          
+入口参数：     无               
+出口参数：     无
+函数功能：     改变PWM占空比函数                                                 
+备    注：     左右电机PWM控制     
+*********************************************************/   
+extern void SetPWMDTY(void);
+
+/********************************************************
+函 数 名：     PID                          
+入口参数：     无               
+出口参数：     无
+函数功能：     PID计算控制函数                                                 
+备    注：     直立速度方向线性叠加     
+*********************************************************/  
+extern void PID(void); 
+
+#endif   // 结束定义，配合#ifndef使用
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU Smartcar 16
+**	文件名称：Control.c
+**  文件描述小车控制定义文件
+**
+**	当前版本：V7.0
+**	作    者：吕传龙
+**	完成日期：07/08/2016 
+** 
+**	取代版本：V6.0
+**	作    者：吕传龙
+**	完成日期：06/10/2016                        
+**	                                    
+**  修改说明：无
+**  历史信息：无
+**		 
+**-------------------------------------------------------
+********************************************************/
+/*---------------头文件引用-----------------------------*/
+#include "MyHeader.h"        // 头文件集                    
+/*---------------预处理块-------------------------------*/
+#define STAND 0
+#define RUN 1
+
+/*---------------变量定义及初始化-----------------------*/
+INT16 ST_KP = 220;  //直立比例参数
+INT16 ST_KD = 2.5;  //直立微分参数
+INT16 SP_KP = 9;    // 速度比例参数
+INT16 SP_KI = 0;    // 速度积分参数 
+INT16 DR_KP = 65;   //方向比例参数
+INT16 DR_KD = 0;    //方向微分参数
+
+float directionError = 0;  //方向误差
+float directionDerror = 0; //方向误差微分
+float predirectionError = 0;  //方向误差保存值
+
+INT16 runType;  //运行状态
+
+INT16 PWMLeft = 0;  //左轮PWM值
+INT16 PWMRight = 0;   //右轮PWM值
+INT16 mainPWMDty = 0; //直立与速度PWM值
+/*---------------函数和类结构声明-----------------------*/
+/*---------------函数和类定义---------------------------*/                     
+/********************************************************
+函 数 名：     SetPWMDTY                          
+入口参数：     无               
+出口参数：     无
+函数功能：     改变PWM占空比函数                                                 
+备    注：     左右电机PWM控制     
+*********************************************************/  
+void SetPWMDTY(void)
+{
+    PWME = 0x00;
+    if((PWMRight==0) && (PWMLeft==0))     //左右电机静止
+    {  
+        PWMDTY01 = 0;
+        PWMDTY23 = 0;
+        PWMDTY45 = 0;
+        PWMDTY67 = 0;
+    } 
+      
+    if((PWMRight>0) && (PWMLeft>0))       //左右电机正转
+    {      
+        PWMDTY01 = PWMRight + PWMDEATH;
+        PWMDTY23 = 0;
+        PWMDTY45 = PWMLeft + PWMDEATH;
+        PWMDTY67 = 0;
+    }
+    else if((PWMRight>0) && (PWMLeft<0))   //左正转右反转
+    {
+        PWMLeft = - PWMLeft;           
+        PWMDTY01 = PWMRight  + PWMDEATH;
+        PWMDTY23 = 0;
+        PWMDTY45 = 0;
+        PWMDTY67 = PWMLeft + PWMDEATH;  
+    }
+    else if((PWMRight<0) && (PWMLeft>0))   //左反转右正转
+    {
+        PWMRight = - PWMRight;
+        PWMDTY01 = 0;
+        PWMDTY23 = PWMRight  + PWMDEATH;
+        PWMDTY45 = PWMLeft + PWMDEATH;
+        PWMDTY67 = 0;  
+    }
+    else if((PWMRight<0) && (PWMLeft<0))   //左右电机反转
+    {
+        PWMLeft  = - PWMLeft;
+        PWMRight = - PWMRight;
+        PWMDTY01 = 0;
+        PWMDTY23 = PWMRight  + PWMDEATH;
+        PWMDTY45 = 0;
+        PWMDTY67 = PWMLeft + PWMDEATH;  
+    } 
+                
+    PWME = 0xaa;
+}
+
+
+/********************************************************
+函 数 名：     PID                          
+入口参数：     无               
+出口参数：     无
+函数功能：     PID计算控制函数                                                 
+备    注：     直立速度方向线性叠加     
+*********************************************************/  
+void PID(void) 
+{   
+    if(runType == STAND)     //直立状态
+    {
+      mainPWMDty = (INT16)(ST_KP*(-angleKalmanOut + angleSta) + ST_KD * (-angleDerror)); //直立PD控制器
+      PWMLeft = mainPWMDty;     
+      PWMRight = mainPWMDty;                        
+    }                                     
+    else if(runType == RUN)  //运行状态      
+    {                                        
+      mainPWMDty = (INT16)(ST_KP * (-angleKalmanOut + angleSta) + ST_KD * (-angleDerror) + SP_KP * (speedSet - averageSpeed)); //直立PD，速度PI控制器
+      PWMLeft = mainPWMDty +(INT16)(DR_KP * directionError + DR_KD * directionDerror);     
+      PWMRight = mainPWMDty +(INT16) (-DR_KP * directionError - DR_KD * directionDerror);                            
+     }
+
+    SetPWMDTY();                 //控制脉宽进行调制
+ }
+
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU Smartcar 16
+**	文件名称：Interrupts.h
+**  文件描述：中断函数头文件
+**
+**	当前版本：V1.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016 
+** 
+**	取代版本：V0.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016                        
+**	
+**  修改说明：无
+**  历史信息：无 					 
+**-------------------------------------------------------
+********************************************************/
+
+#ifndef Interrupts_H        
+#define Interrupts_H    // 防止重复定义
+/*---------------预处理块-------------------------------*/
+/*---------------变量声明-------------------------------*/
+extern UINT8 interruptFlag;
+extern INT16 showTimes;
+/*---------------函数和类结构声明-----------------------*/
+
+#endif    // 结束定义，配合#ifndef使用
+
+/********************************************************
+**  Copyright (c)   SWJTU Smartcar 16, All Rights Reserved.
+**-------------------------------------------------------
+**	项目名称：SWJTU Smartcar 16
+**	文件名称：Interrupts.c
+**  文件描述：中断函数定义文件 
+**
+**	当前版本：V1.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016 
+** 
+**	取代版本：V0.0
+**	作    者：吕传龙
+**	完成日期：02/06/2016                        
+**	
+**  修改说明：无
+**  历史信息：无 					 
+**-------------------------------------------------------
+********************************************************/
+/*---------------头文件引用-----------------------------*/
+#include "MyHeader.h"     // 头文件集合
+/*---------------变量定义及初始化-----------------------*/
+UINT8 interruptFlag = 0;
+INT16 showTimes = 0;
+/*===============中断函数定义===========================*/
+/********************************************************
+中断函数名：   PIT0
+入口参数：     无
+出口参数：     无
+函数功能：     定时进入中断，处理数据                   
+备    注：     PIT0中断，每3毫秒进一次中断,并计时，
+              毫秒timeMs，秒timeSec
+*********************************************************/
+# pragma CODE_SEG __NEAR_SEG NON_BANKED  
+void interrupt 66 PIT0(void) 
+{ 	
+    DisableInterrupts;  //关中断   
+    PITTF_PTF0 = 1; 
+    PID();              //PID计算
+  
+    activateTimes++;     //减压启动 缓慢加速
+    if(startToEnd==0 && runType==1 && activateTimes==30) 
+    {
+      activateTimes = 0;
+      speedSet++;
+      if(speedSet==speedFinal)
+      {
+        startToEnd = 1; 
+      }      
+    }   
+
+    interruptFlag++;        
+    if((interruptFlag==1)||(interruptFlag==3))     //直立控制
+    {       
+      ConvertAngel();          
+    }                                             
+    else if(interruptFlag==2)                     //计算转向量
+    {   
+     // SendSCIByte(dataTestUD) ;
+      showTimes++;
+      if(showTimes==50)  showTimes=0;
+      
+      directionError = laserDeviation;
+      directionDerror = (directionError - predirectionError)/0.006;        
+      predirectionError = directionError;   
+    }
+    else if(interruptFlag==4)                    //采集图像
+    {                                              
+      RD_TSL();
+     // SendSCIByte(dataTestLR) ;
+      interruptFlag=0;       
+    }
+    if(interruptFlag==0)                        //计算转向量
+    {
+      directionError = laserDeviation;
+      directionDerror = (directionError - predirectionError)/0.006;        
+      predirectionError = directionError;  
+                               
+      SpeedNumbers++;
+      if(SpeedNumbers==2)                     //计算速度量
+      {
+        SpeedNumbers=0;
+        preCD45 = aftCD45;
+        aftCD45=PORTA;
+        prePACNT = aftPACNT;
+        aftPACNT = PACNT;
+        ConvertSpeed();
+      }
+                                                                                                                                                                             
+    }
+    EnableInterrupts;    
+ }    
+ 
+                                                                                                                                                                                           
+/********************************************************
+中断函数名：   MDC
+入口参数：     无
+出口参数：     无
+函数功能：     数据溢出进入中断，处理数据                   
+备    注：     内部计数器溢出申请中断.overflowFalg=1
+*********************************************************/
+#pragma CODE_SEG __NEAR_SEG NON_BANKED  
+void interrupt 17 MDC(void)
+{
+  DisableInterrupts;
+  overflowFlag++;
+  PAFLG=0x03;
+  EnableInterrupts;  
+}
+
+/********************************************************
+中断函数名：   SCI0_re
+入口参数：     无
+出口参数：     无
+函数功能：     串口接受数据进入中断，处理数据                   
+备    注：     无
+*********************************************************/
+#pragma CODE_SEG NON_BANKED  
+void  interrupt 20 SCI0_re(void) 
+{
+  dataRec = GetSCIByte();
+}
+                                                            
+
